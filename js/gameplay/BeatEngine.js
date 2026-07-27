@@ -6,11 +6,21 @@
 import { GameConstants } from '../constants/GameConstants.js';
 
 export class BeatEngine {
-    constructor(beatProvider) {
-        this.beatProvider = beatProvider;
+    constructor() {
+        this.beatProvider = null;
         this.currentBeatIndex = 0;
         this.currentMeasure = 0;
         this.startTime = 0;
+        this.manualBPM = null;
+        this.bpmCorrectionEnabled = false;
+    }
+
+    /**
+     * Set the beat provider
+     * @param {BeatProvider} beatProvider - Beat provider instance
+     */
+    setBeatProvider(beatProvider) {
+        this.beatProvider = beatProvider;
     }
 
     /**
@@ -116,6 +126,59 @@ export class BeatEngine {
             beatInMeasure: this.getBeatInMeasure(),
             isOnDownbeat: this.isOnDownbeat()
         };
+    }
+
+    /**
+     * Enable manual BPM correction
+     * @param {number} bpm - Manual BPM value
+     */
+    enableManualBPM(bpm) {
+        this.manualBPM = bpm;
+        this.bpmCorrectionEnabled = true;
+    }
+
+    /**
+     * Disable manual BPM correction
+     */
+    disableManualBPM() {
+        this.manualBPM = null;
+        this.bpmCorrectionEnabled = false;
+    }
+
+    /**
+     * Get the effective BPM (manual or detected)
+     * @returns {number} Effective BPM
+     */
+    getEffectiveBPM() {
+        if (this.bpmCorrectionEnabled && this.manualBPM !== null) {
+            return this.manualBPM;
+        }
+        return this.beatProvider ? this.beatProvider.getBPM() : GameConstants.DEFAULT_BPM;
+    }
+
+    /**
+     * Get the detected BPM (before manual correction)
+     * @returns {number} Detected BPM
+     */
+    getDetectedBPM() {
+        return this.beatProvider ? this.beatProvider.getBPM() : GameConstants.DEFAULT_BPM;
+    }
+
+    /**
+     * Get the measure duration in seconds based on effective BPM
+     * @returns {number} Measure duration in seconds
+     */
+    getMeasureDuration() {
+        const bpm = this.getEffectiveBPM();
+        return (60 / bpm) * GameConstants.BEATS_PER_MEASURE;
+    }
+
+    /**
+     * Reset beat tracking
+     */
+    reset() {
+        this.currentBeatIndex = 0;
+        this.currentMeasure = 0;
     }
 }
 
