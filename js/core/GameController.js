@@ -41,36 +41,33 @@ export class GameController {
     
     setupUIElements() {
         this.uiElements = {
-            songFileInput: document.getElementById('songFile'),
-            loadSongBtn: document.getElementById('loadSongBtn'),
-            startGameBtn: document.getElementById('startGameBtn'),
-            pauseBtn: document.getElementById('pauseBtn'),
-            aiToggle: document.getElementById('aiToggle'),
-            bpmDetected: document.getElementById('bpmDetected'),
-            bpmManual: document.getElementById('bpmManual'),
-            applyBpmBtn: document.getElementById('applyBpmBtn'),
-            resetBpmBtn: document.getElementById('resetBpmBtn'),
-            bpmCorrectionSection: document.getElementById('bpmCorrectionSection'),
-            songNameDisplay: document.getElementById('songName'),
-            bpmDisplay: document.getElementById('bpmDisplay'),
-            beatDisplay: document.getElementById('beatDisplay'),
-            scoreDisplay: document.getElementById('score'),
-            comboDisplay: document.getElementById('combo'),
-            accuracyDisplay: document.getElementById('accuracy'),
-            judgeText: document.getElementById('judgeText'),
-            debugPanel: document.getElementById('debugPanel'),
-            gaugeContainer: document.querySelector('.gauge-container'),
-            gaugeBall: document.querySelector('.gauge-ball'),
-            arrowPanel: document.querySelector('.arrow-panel'),
-            gameArea: document.querySelector('.game-area')
+            songFileInput: document.getElementById('song-file-input'),
+            loadSongBtn: null, // No separate load button, using file input directly
+            startGameBtn: document.getElementById('start-game-btn'),
+            pauseBtn: document.getElementById('pause-resume-btn'),
+            aiToggle: document.getElementById('ai-player-toggle'),
+            bpmDetected: document.getElementById('detected-bpm'),
+            bpmManual: document.getElementById('manual-bpm-input'),
+            applyBpmBtn: document.getElementById('apply-bpm-btn'),
+            resetBpmBtn: document.getElementById('reset-bpm-btn'),
+            bpmCorrectionSection: document.getElementById('bpm-correction'),
+            songNameDisplay: document.getElementById('song-name-display'),
+            bpmDisplay: document.getElementById('hud-bpm'),
+            beatDisplay: document.getElementById('hud-beat'),
+            scoreDisplay: document.getElementById('score-display'),
+            comboDisplay: document.getElementById('combo-display'),
+            accuracyDisplay: document.getElementById('accuracy-display'),
+            judgeText: document.getElementById('judge-display'),
+            debugPanel: document.getElementById('debug-panel'),
+            gaugeContainer: document.getElementById('beat-gauge-container'),
+            gaugeBall: document.getElementById('gauge-ball'),
+            arrowPanel: document.getElementById('arrow-panel'),
+            gameArea: document.getElementById('gameplay-area')
         };
     }
     
     attachEventListeners() {
-        this.uiElements.loadSongBtn.addEventListener('click', () => {
-            this.uiElements.songFileInput.click();
-        });
-        
+        // File input change listener
         this.uiElements.songFileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -422,13 +419,17 @@ export class GameController {
     }
     
     showLoading(show) {
-        const btn = this.uiElements.loadSongBtn;
+        const indicator = document.getElementById('loading-indicator');
+        const progress = document.getElementById('analysis-progress');
+        const startBtn = this.uiElements.startGameBtn;
+        
         if (show) {
-            btn.textContent = 'Loading...';
-            btn.disabled = true;
+            indicator.classList.remove('hidden');
+            progress.classList.remove('hidden');
+            startBtn.disabled = true;
         } else {
-            btn.textContent = 'Choose Song File';
-            btn.disabled = false;
+            indicator.classList.add('hidden');
+            progress.classList.add('hidden');
         }
     }
 }
