@@ -168,6 +168,8 @@ export class TimingEngine {
      * @returns {Object} Timing data
      */
     getDebugInfo() {
+        return this.getTimingData();
+    }
 
     /**
      * Get comprehensive timing data for game loop
