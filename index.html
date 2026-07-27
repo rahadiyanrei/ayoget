@@ -362,6 +362,67 @@
             color: #000;
         }
 
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(180deg, #4a9eff 0%, #2a5a9a 100%);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            margin-left: 5px;
+        }
+
+        .btn-small:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(74, 158, 255, 0.6);
+        }
+
+        .btn-small.btn-reset {
+            background: linear-gradient(180deg, #ff6b6b 0%, #c0392b 100%);
+        }
+
+        .bpm-correction-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .bpm-label {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .bpm-value {
+            font-size: 18px;
+            color: #4a9eff;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .bpm-input {
+            width: 100px;
+            padding: 8px;
+            font-size: 16px;
+            border: 2px solid #4a9eff;
+            border-radius: 6px;
+            background: #1a1a2e;
+            color: #fff;
+            text-align: center;
+        }
+
+        .bpm-input:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
         .song-info {
             background: rgba(0, 0, 0, 0.5);
             padding: 15px;
@@ -477,6 +538,18 @@
             <div class="menu-section">
                 <div class="menu-label">Step 2: Start Game</div>
                 <button class="btn btn-start" id="startGameBtn" disabled>▶ Start Game</button>
+            </div>
+
+            <div class="menu-section bpm-correction hidden" id="bpmCorrectionSection">
+                <div class="menu-label">BPM Correction</div>
+                <div class="bpm-correction-controls">
+                    <span class="bpm-label">Detected:</span>
+                    <span class="bpm-value" id="detectedBpmValue">0</span>
+                    <span class="bpm-label">Corrected:</span>
+                    <input type="number" id="manualBpmInput" class="bpm-input" step="0.01" min="40" max="300" placeholder="Enter BPM">
+                    <button class="btn btn-small" id="applyBpmBtn">Apply</button>
+                    <button class="btn btn-small btn-reset" id="resetBpmBtn">Reset</button>
+                </div>
             </div>
 
             <div class="menu-section">
@@ -736,6 +809,27 @@
                 this.pauseTime = 0;
             }
 
+            seekTo(time) {
+                if (!this.audioBuffer || !this.audioContext) return;
+                
+                const wasPlaying = this.isPlaying;
+                
+                // Stop current playback
+                if (this.isPlaying && this.sourceNode) {
+                    this.sourceNode.stop();
+                    this.sourceNode = null;
+                    this.isPlaying = false;
+                }
+                
+                // Set pause time to the seek position
+                this.pauseTime = Math.max(0, Math.min(time, this.getDuration()));
+                
+                // Resume if was playing
+                if (wasPlaying) {
+                    this.play();
+                }
+            }
+
             getCurrentTime() {
                 if (!this.audioContext || !this.isPlaying) return this.pauseTime;
                 return this.audioContext.currentTime - this.startTime;
@@ -951,20 +1045,69 @@
                 this.bpm = 0;
                 this.currentBeatIndex = 0;
                 this.measureDuration = 0;
+                
+                // Manual BPM correction
+                this.manualBPM = null;
+                this.bpmCorrectionEnabled = false;
             }
 
-            setBeats(beats, bpm) {
+            setBeats(beats, detectedBPM) {
                 this.beats = beats;
-                this.bpm = bpm;
+                this.bpm = detectedBPM;
                 this.currentBeatIndex = 0;
+                this.manualBPM = null;
+                this.bpmCorrectionEnabled = false;
                 
-                // Calculate measure duration (4 beats per measure in 4/4 time)
-                if (bpm > 0) {
-                    const beatDuration = 60 / bpm;
+                this.updateMeasureDuration();
+                console.log(`BeatEngine: Loaded ${beats.length} beats at ${detectedBPM.toFixed(2)} BPM`);
+            }
+
+            enableManualBPM(bpm) {
+                this.manualBPM = bpm;
+                this.bpmCorrectionEnabled = true;
+                this.updateMeasureDuration();
+                this.regenerateBeatTimeline();
+                console.log(`BeatEngine: Manual BPM enabled at ${bpm.toFixed(2)} BPM`);
+            }
+
+            disableManualBPM() {
+                this.manualBPM = null;
+                this.bpmCorrectionEnabled = false;
+                this.updateMeasureDuration();
+                this.regenerateBeatTimeline();
+                console.log(`BeatEngine: Manual BPM disabled, using detected BPM`);
+            }
+
+            getEffectiveBPM() {
+                return this.bpmCorrectionEnabled ? this.manualBPM : this.bpm;
+            }
+
+            updateMeasureDuration() {
+                const effectiveBPM = this.getEffectiveBPM();
+                if (effectiveBPM > 0) {
+                    const beatDuration = 60 / effectiveBPM;
                     this.measureDuration = beatDuration * 4;
                 } else {
                     this.measureDuration = 0;
                 }
+            }
+
+            regenerateBeatTimeline() {
+                if (this.beats.length === 0) return;
+                
+                const effectiveBPM = this.getEffectiveBPM();
+                const beatInterval = 60 / effectiveBPM;
+                
+                // Regenerate beats based on the first beat and new BPM
+                const firstBeatTime = this.beats[0];
+                const newBeats = [firstBeatTime];
+                
+                for (let i = 1; i < this.beats.length; i++) {
+                    newBeats.push(firstBeatTime + (i * beatInterval));
+                }
+                
+                this.beats = newBeats;
+                console.log(`BeatEngine: Regenerated ${newBeats.length} beats at ${effectiveBPM.toFixed(2)} BPM`);
             }
 
             getCurrentBeatIndex(currentTime) {
@@ -1569,6 +1712,13 @@
                 this.ui.loadingProgress = document.getElementById('loadingProgress');
                 this.ui.startGameBtn = document.getElementById('startGameBtn');
                 this.ui.aiPlayerToggle = document.getElementById('aiPlayerToggle');
+                
+                // BPM Correction elements
+                this.ui.bpmCorrectionSection = document.getElementById('bpmCorrectionSection');
+                this.ui.detectedBpmValue = document.getElementById('detectedBpmValue');
+                this.ui.manualBpmInput = document.getElementById('manualBpmInput');
+                this.ui.applyBpmBtn = document.getElementById('applyBpmBtn');
+                this.ui.resetBpmBtn = document.getElementById('resetBpmBtn');
 
                 // HUD elements
                 this.ui.scoreDisplay = document.getElementById('scoreDisplay');
@@ -1609,6 +1759,15 @@
                 // AI toggle
                 this.ui.aiPlayerToggle.addEventListener('change', (e) => {
                     this.aiPlayer.setEnabled(e.target.checked);
+                });
+
+                // BPM Correction
+                this.ui.applyBpmBtn.addEventListener('click', () => this.applyManualBPM());
+                this.ui.resetBpmBtn.addEventListener('click', () => this.resetBPM());
+                this.ui.manualBpmInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.applyManualBPM();
+                    }
                 });
             }
 
@@ -1682,10 +1841,15 @@
                     this.beatEngine.setBeats(beats, bpm);
 
                     // Update UI
-                    this.ui.songStatus.textContent = `Ready! ${beats.length} beats @ ${bpm} BPM`;
+                    this.ui.songStatus.textContent = `Ready! ${beats.length} beats @ ${bpm.toFixed(2)} BPM`;
                     this.ui.loadingProgress.style.width = '100%';
                     this.ui.hudSongName.textContent = file.name.replace(/\.[^/.]+$/, '');
-                    this.ui.hudBpm.textContent = bpm;
+                    this.ui.hudBpm.textContent = bpm.toFixed(2);
+                    
+                    // Show BPM correction section
+                    this.ui.bpmCorrectionSection.classList.remove('hidden');
+                    this.ui.detectedBpmValue.textContent = bpm.toFixed(2);
+                    this.ui.manualBpmInput.value = '';
 
                     this.setState(GameConstants.STATE.READY);
                     this.ui.startGameBtn.disabled = false;
@@ -1695,6 +1859,72 @@
                     this.ui.songStatus.textContent = 'Error: ' + error.message;
                     this.setState(GameConstants.STATE.MENU);
                 }
+            }
+
+            applyManualBPM() {
+                const manualBpm = parseFloat(this.ui.manualBpmInput.value);
+                
+                if (isNaN(manualBpm) || manualBpm < 40 || manualBpm > 300) {
+                    alert('Please enter a valid BPM between 40 and 300');
+                    return;
+                }
+
+                const wasPlaying = this.state === GameConstants.STATE.PLAYING;
+                
+                // Stop audio if playing
+                if (wasPlaying) {
+                    const currentTime = this.audioEngine.getCurrentTime();
+                    this.audioEngine.pause();
+                    
+                    // Store the current time to resume from same position
+                    this.resumeTime = currentTime;
+                }
+
+                // Apply manual BPM
+                this.beatEngine.enableManualBPM(manualBpm);
+                
+                // Update UI
+                this.ui.hudBpm.textContent = manualBpm.toFixed(2) + ' (manual)';
+                this.ui.dbgBpm.textContent = manualBpm.toFixed(2) + ' (manual)';
+
+                // Resume if was playing
+                if (wasPlaying && this.resumeTime !== undefined) {
+                    setTimeout(() => {
+                        this.audioEngine.seekTo(this.resumeTime);
+                        this.audioEngine.play();
+                    }, 100);
+                }
+
+                console.log(`BPM corrected to ${manualBpm.toFixed(2)}`);
+            }
+
+            resetBPM() {
+                const wasPlaying = this.state === GameConstants.STATE.PLAYING;
+                
+                // Stop audio if playing
+                if (wasPlaying) {
+                    const currentTime = this.audioEngine.getCurrentTime();
+                    this.audioEngine.pause();
+                    
+                    this.resumeTime = currentTime;
+                }
+
+                // Reset to detected BPM
+                this.beatEngine.disableManualBPM();
+                
+                // Update UI
+                this.ui.hudBpm.textContent = this.beatEngine.bpm.toFixed(2);
+                this.ui.manualBpmInput.value = '';
+
+                // Resume if was playing
+                if (wasPlaying && this.resumeTime !== undefined) {
+                    setTimeout(() => {
+                        this.audioEngine.seekTo(this.resumeTime);
+                        this.audioEngine.play();
+                    }, 100);
+                }
+
+                console.log('BPM reset to detected value');
             }
 
             startGame() {
@@ -1873,8 +2103,9 @@
             }
 
             updateDebugPanel() {
+                const effectiveBpm = this.beatEngine.getEffectiveBPM();
                 this.ui.dbgTime.textContent = this.timingEngine.getCurrentTime().toFixed(3);
-                this.ui.dbgBpm.textContent = this.beatEngine.bpm || '--';
+                this.ui.dbgBpm.textContent = effectiveBpm ? effectiveBpm.toFixed(2) + (this.beatEngine.bpmCorrectionEnabled ? ' (M)' : '') : '--';
                 this.ui.dbgBeat.textContent = this.timingEngine.getCurrentBeat() + 1;
                 this.ui.dbgMeasure.textContent = this.timingEngine.getCurrentMeasure() + 1;
                 this.ui.dbgGauge.textContent = this.gaugeEngine.getPosition().toFixed(4);
