@@ -8,10 +8,17 @@ import { GameConstants } from '../constants/GameConstants.js';
 import { clamp, isInRange, isInSplitRange } from '../utils/MathUtils.js';
 
 export class TimingEngine {
-    constructor(audioEngine, beatProvider) {
+    constructor() {
+        this.audioEngine = null;
+        this.beatEngine = null;
+    }
+
+    /**
+     * Set the audio engine reference
+     * @param {AudioEngine} audioEngine - Audio engine instance
+     */
+    setAudioEngine(audioEngine) {
         this.audioEngine = audioEngine;
-        this.beatProvider = beatProvider;
-        this.beatEngine = null; // Will be set by GameController
     }
 
     /**
@@ -27,7 +34,7 @@ export class TimingEngine {
      * @returns {number} Current time in seconds
      */
     getCurrentTime() {
-        return this.audioEngine.getCurrentTime();
+        return this.audioEngine ? this.audioEngine.getCurrentTime() : 0;
     }
 
     /**
@@ -36,12 +43,12 @@ export class TimingEngine {
      * @returns {number} Gauge progress percentage (0-100)
      */
     getGaugeProgress() {
-        if (!this.beatProvider.isReady()) {
+        if (!this.beatEngine) {
             return 0;
         }
 
         const currentTime = this.getCurrentTime();
-        const measureDuration = this.beatProvider.getMeasureDuration();
+        const measureDuration = this.beatEngine.getMeasureDuration();
         
         // Calculate position within current measure
         const timeInMeasure = currentTime % measureDuration;
@@ -115,12 +122,12 @@ export class TimingEngine {
      * @returns {number} Time remaining in seconds
      */
     getRemainingMeasureTime() {
-        if (!this.beatProvider.isReady()) {
+        if (!this.beatEngine) {
             return 0;
         }
 
         const currentTime = this.getCurrentTime();
-        const measureDuration = this.beatProvider.getMeasureDuration();
+        const measureDuration = this.beatEngine.getMeasureDuration();
         const timeInMeasure = currentTime % measureDuration;
         
         return measureDuration - timeInMeasure;
@@ -153,7 +160,7 @@ export class TimingEngine {
      * @returns {number} Current BPM
      */
     getBPM() {
-        return this.beatProvider.getEffectiveBPM();
+        return this.beatEngine ? this.beatEngine.getEffectiveBPM() : GameConstants.DEFAULT_BPM;
     }
 
     /**
@@ -161,16 +168,29 @@ export class TimingEngine {
      * @returns {Object} Timing data
      */
     getDebugInfo() {
+
+    /**
+     * Get comprehensive timing data for game loop
+     * @returns {Object} Timing data object
+     */
+    getTimingData() {
         return {
-            currentTime: this.getCurrentTime().toFixed(3),
-            gaugeProgress: this.getGaugeProgressPercent().toFixed(2) + '%',
-            bpm: this.getBPM(),
+            currentTime: this.getCurrentTime(),
+            gaugeProgress: this.getGaugeProgress(),
             currentBeat: this.getCurrentBeat(),
             currentMeasure: this.getCurrentMeasure(),
-            remainingMeasureTime: this.getRemainingMeasureTime().toFixed(3),
-            judgeResult: this.getJudgeResult(),
-            distanceFromPerfect: this.getDistanceFromPerfect().toFixed(4)
+            bpm: this.getBPM(),
+            judgeResult: this.getJudgeResult()
         };
+    }
+
+    /**
+     * Update timing (called each frame)
+     */
+    update() {
+        if (this.beatEngine) {
+            this.beatEngine.update(this.getCurrentTime());
+        }
     }
 }
 
