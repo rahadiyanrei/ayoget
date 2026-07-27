@@ -1,0 +1,200 @@
+/* Gameplay CSS - Beat Gauge and Arrow Panel */
+
+#gameplay-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 800px;
+}
+
+#gameplay-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    margin: 20px 0;
+}
+
+/* Beat Gauge */
+#beat-gauge-container {
+    width: 480px;
+    height: 20px;
+    position: relative;
+}
+
+#beat-gauge {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+#gauge-ball {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 8px rgba(245, 87, 108, 0.6);
+    transition: none; /* Linear movement only */
+}
+
+#perfect-zone {
+    position: absolute;
+    top: 0;
+    left: 73%;
+    width: 4%; /* 0.73 to 0.77 = 4% */
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(255, 215, 0, 0.3) 0%, 
+        rgba(255, 215, 0, 0.5) 50%, 
+        rgba(255, 215, 0, 0.3) 100%);
+    border-left: 1px solid rgba(255, 215, 0, 0.5);
+    border-right: 1px solid rgba(255, 215, 0, 0.5);
+    pointer-events: none;
+}
+
+/* Arrow Panel */
+#arrow-panel {
+    display: flex;
+    gap: 10px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.arrow-slot {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.1s ease;
+}
+
+.arrow-slot.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+}
+
+.arrow-slot.correct {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border-color: #38ef7d;
+    box-shadow: 0 0 20px rgba(56, 239, 125, 0.6);
+}
+
+.arrow-slot.wrong {
+    background: linear-gradient(135deg, #eb3349 0%, #e45c5f 100%);
+    border-color: #eb3349;
+    animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.arrow-icon {
+    font-size: 24px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.arrow-slot.active .arrow-icon,
+.arrow-slot.correct .arrow-icon {
+    color: white;
+}
+
+.space-slot {
+    width: 100px;
+}
+
+.space-slot .arrow-icon {
+    font-size: 16px;
+}
+
+/* Judge Display */
+#judge-display {
+    font-size: 32px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    min-height: 40px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+#judge-display.perfect {
+    color: #ffd700;
+    animation: popIn 0.2s ease;
+}
+
+#judge-display.great {
+    color: #ff6b6b;
+    animation: popIn 0.2s ease;
+}
+
+#judge-display.cool {
+    color: #4ecdc4;
+    animation: popIn 0.2s ease;
+}
+
+#judge-display.miss {
+    color: #95a5a6;
+    animation: popIn 0.2s ease;
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Combo Display Large */
+#combo-display-large {
+    font-size: 48px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.3);
+    min-height: 60px;
+}
+
+#combo-display-large.active {
+    color: rgba(102, 126, 234, 0.8);
+    animation: pulse 0.3s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Game Controls */
+#game-controls {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
