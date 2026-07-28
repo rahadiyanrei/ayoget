@@ -34,9 +34,9 @@ export class GameController {
         this.setupUIElements();
         this.attachEventListeners();
         
-        this.eventBus.subscribe('SONG_LOADED', this.handleSongLoaded.bind(this));
-        this.eventBus.subscribe('BEAT_ANALYSIS_COMPLETE', this.handleBeatAnalysisComplete.bind(this));
-        this.eventBus.subscribe('PLAYBACK_UPDATE', this.handlePlaybackUpdate.bind(this));
+        this.eventBus.on('SONG_LOADED', this.handleSongLoaded.bind(this));
+        this.eventBus.on('BEAT_ANALYSIS_COMPLETE', this.handleBeatAnalysisComplete.bind(this));
+        this.eventBus.on('PLAYBACK_UPDATE', this.handlePlaybackUpdate.bind(this));
     }
     
     setupUIElements() {
